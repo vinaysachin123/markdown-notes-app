@@ -11,7 +11,13 @@ export default function Sidebar({
   searchTerm, 
   setSearchTerm,
   theme,
-  toggleTheme 
+  toggleTheme,
+  loadMore,
+  hasMore,
+  sortBy,
+  setSortBy,
+  order,
+  setOrder
 }) {
   const { logout, user } = useAuth();
 
@@ -32,7 +38,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="search-container" style={{ padding: '0 1.5rem', marginBottom: '1rem' }}>
+      <div className="sidebar-controls" style={{ padding: '0 1.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div className="search-box">
           <Search size={16} />
           <input 
@@ -42,35 +48,52 @@ export default function Sidebar({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        <div className="sort-box">
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="last_modified">Date</option>
+            <option value="title">Title</option>
+          </select>
+          <button onClick={() => setOrder(order === 'ASC' ? 'DESC' : 'ASC')} className="order-btn">
+            {order === 'ASC' ? '↑' : '↓'}
+          </button>
+        </div>
       </div>
 
       <div className="notes-list">
         {notes.length === 0 ? (
           <div className="empty-state">No notes found</div>
         ) : (
-          notes.map(note => (
-            <div 
-              key={note.id} 
-              className={`note-item ${activeNoteId === note.id ? 'active' : ''}`}
-              onClick={() => onNoteSelect(note)}
-            >
-              <div className="note-item-content">
-                <span className="note-title">{note.title || 'Untitled'}</span>
-                <span className="note-date">
-                  {new Date(note.last_modified).toLocaleDateString()}
-                </span>
-              </div>
-              <button 
-                className="delete-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onNoteDelete(note.id);
-                }}
+          <>
+            {notes.map(note => (
+              <div 
+                key={note.id} 
+                className={`note-item ${activeNoteId === note.id ? 'active' : ''}`}
+                onClick={() => onNoteSelect(note)}
               >
-                <Trash2 size={14} />
+                <div className="note-item-content">
+                  <span className="note-title">{note.title || 'Untitled'}</span>
+                  <span className="note-date">
+                    {new Date(note.last_modified).toLocaleDateString()}
+                  </span>
+                </div>
+                <button 
+                  className="delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNoteDelete(note.id);
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            {hasMore && (
+              <button onClick={loadMore} className="load-more-btn">
+                Load More
               </button>
-            </div>
-          ))
+            )}
+          </>
         )}
       </div>
 
@@ -116,6 +139,45 @@ export default function Sidebar({
           outline: none;
           color: var(--text-color);
           font-size: 0.9rem;
+        }
+        .sort-box {
+          display: flex;
+          gap: 8px;
+        }
+        .sort-box select {
+          flex: 1;
+          background: var(--sidebar-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 6px;
+          color: var(--text-color);
+          font-size: 0.8rem;
+          outline: none;
+        }
+        .order-btn {
+          width: 32px;
+          height: 32px;
+          background: var(--sidebar-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          color: var(--accent-color);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+        }
+        .load-more-btn {
+          margin: 1.5rem;
+          padding: 10px;
+          background: var(--sidebar-bg);
+          border: 1px solid var(--border-color);
+          color: var(--accent-color);
+          font-weight: 600;
+          font-size: 0.85rem;
+          border-radius: var(--radius);
+        }
+        .load-more-btn:hover {
+          background: var(--border-color);
         }
         .notes-list {
           flex: 1;

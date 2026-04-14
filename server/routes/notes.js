@@ -3,10 +3,26 @@ const router = express.Router();
 const db = require('../database');
 const authenticateToken = require('../middleware/auth');
 
-// Get all notes for the logged-in user
+// Get all notes for the logged-in user (with Pagination and Sorting)
 router.get('/', authenticateToken, (req, res) => {
-  const sql = 'SELECT * FROM notes WHERE user_id = ? ORDER BY last_modified DESC';
-  db.all(sql, [req.user.id], (err, rows) => {
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+  const sortBy = req.query.sortBy || 'last_modified';
+  const order = req.query.order || 'DESC';
+
+  // Validate sort parameters to prevent SQL injection
+  const allowedSorts = ['last_modified', 'title'];
+  const finalSort = allowedSorts.includes(sortBy) ? sortBy : 'last_modified';
+  const finalOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+  const sql = `
+    SELECT * FROM notes 
+    WHERE user_id = ? 
+    ORDER BY ${finalSort} ${finalOrder}
+    LIMIT ? OFFSET ?
+  `;
+  
+  db.all(sql, [req.user.id, limit, offset], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(rows);
   });

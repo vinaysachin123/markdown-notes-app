@@ -15,6 +15,10 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [sortBy, setSortBy] = useState('last_modified');
+  const [order, setOrder] = useState('DESC');
 
   // Theme support
   useEffect(() => {
@@ -25,20 +29,42 @@ function App() {
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   // Fetch notes
-  const fetchNotes = async (query = '') => {
+  const fetchNotes = async (isNewSearch = false) => {
     if (!token) return;
+    const currentPage = isNewSearch ? 0 : page;
+    const limit = 10;
+    const offset = currentPage * limit;
+
     try {
-      const url = query ? `${API_BASE_URL}/notes/search/${query}` : `${API_BASE_URL}/notes`;
+      const url = searchTerm 
+        ? `${API_BASE_URL}/notes/search/${searchTerm}?limit=${limit}&offset=${offset}&sortBy=${sortBy}&order=${order}` 
+        : `${API_BASE_URL}/notes?limit=${limit}&offset=${offset}&sortBy=${sortBy}&order=${order}`;
+      
       const response = await axios.get(url);
-      setNotes(response.data);
+      const newNotes = response.data;
+
+      if (isNewSearch) {
+        setNotes(newNotes);
+        setPage(1);
+      } else {
+        setNotes([...notes, ...newNotes]);
+        setPage(currentPage + 1);
+      }
+      
+      setHasMore(newNotes.length === limit);
     } catch (error) {
       console.error('Error fetching notes:', error);
     }
   };
 
   useEffect(() => {
-    if (token) fetchNotes(searchTerm);
-  }, [token, searchTerm]);
+    setPage(0);
+    fetchNotes(true);
+  }, [token, searchTerm, sortBy, order]);
+
+  const loadMore = () => {
+    if (hasMore) fetchNotes();
+  };
 
   // Create note
   const createNote = async () => {
@@ -95,6 +121,12 @@ function App() {
         setSearchTerm={setSearchTerm}
         theme={theme}
         toggleTheme={toggleTheme}
+        loadMore={loadMore}
+        hasMore={hasMore}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        order={order}
+        setOrder={setOrder}
       />
       <EditorPane 
         note={activeNote} 
