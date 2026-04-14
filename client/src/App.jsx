@@ -6,6 +6,8 @@ import EditorPane from './components/EditorPane';
 import Auth from './components/Auth';
 import useDebounce from './hooks/useDebounce';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 function App() {
   const { token, loading } = useAuth();
   const [notes, setNotes] = useState([]);
@@ -26,7 +28,7 @@ function App() {
   const fetchNotes = async (query = '') => {
     if (!token) return;
     try {
-      const url = query ? `http://localhost:5000/api/notes/search/${query}` : 'http://localhost:5000/api/notes';
+      const url = query ? `${API_BASE_URL}/notes/search/${query}` : `${API_BASE_URL}/notes`;
       const response = await axios.get(url);
       setNotes(response.data);
     } catch (error) {
@@ -41,7 +43,7 @@ function App() {
   // Create note
   const createNote = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/notes', {
+      const response = await axios.post(`${API_BASE_URL}/notes`, {
         title: 'Untitled Note',
         content: ''
       });
@@ -57,7 +59,7 @@ function App() {
   const deleteNote = async (id) => {
     if (!window.confirm('Are you sure you want to delete this note?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/notes/${id}`);
+      await axios.delete(`${API_BASE_URL}/notes/${id}`);
       setNotes(notes.filter(n => n.id !== id));
       if (activeNote?.id === id) setActiveNote(null);
     } catch (error) {
@@ -69,7 +71,7 @@ function App() {
   const updateNote = async (id, data) => {
     setIsSaving(true);
     try {
-      await axios.put(`http://localhost:5000/api/notes/${id}`, data);
+      await axios.put(`${API_BASE_URL}/notes/${id}`, data);
       setNotes(notes.map(n => n.id === id ? { ...n, ...data, last_modified: new Date().toISOString() } : n));
     } catch (error) {
       console.error('Error updating note:', error);

@@ -1,4 +1,4 @@
-require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
@@ -11,13 +11,17 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
 
-// Basic health check
-app.get('/', (req, res) => {
-  res.send('Markdown Notes API is running...');
+// Serve Static Files in Production
+const clientDistPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientDistPath));
+
+// Catch-all route for React SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
 app.listen(PORT, () => {
