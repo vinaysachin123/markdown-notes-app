@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Save, Eye, Edit3, Type } from 'lucide-react';
+import { Save, Eye, Edit3, Type, Clock } from 'lucide-react';
 
 import useDebounce from '../hooks/useDebounce';
+import HistorySidebar from './HistorySidebar';
+import TagManager from './TagManager';
 
 export default function EditorPane({ note, onSave, isSaving }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [viewMode, setViewMode] = useState('split'); // split, edit, preview
+  const [viewMode, setViewMode] = useState('split');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const debouncedTitle = useDebounce(title, 1000);
   const debouncedContent = useDebounce(content, 1000);
@@ -23,12 +26,16 @@ export default function EditorPane({ note, onSave, isSaving }) {
     }
   }, [note]);
 
-  // Notify parent of changes for auto-save using debounced values
   useEffect(() => {
     if (note && (debouncedTitle !== note.title || debouncedContent !== note.content)) {
       onSave({ title: debouncedTitle, content: debouncedContent });
     }
   }, [debouncedTitle, debouncedContent]);
+
+  const handleRestore = (newContent) => {
+    setContent(newContent);
+    onSave({ title, content: newContent });
+  };
 
   if (!note) {
     return (
@@ -42,16 +49,26 @@ export default function EditorPane({ note, onSave, isSaving }) {
   return (
     <div className="main-content">
       <header className="editor-header">
-        <input 
-          className="title-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note Title"
-        />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <input 
+            className="title-input"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Note Title"
+          />
+          <TagManager noteId={note.id} />
+        </div>
         <div className="header-actions">
           <span className={`save-indicator ${isSaving ? 'active' : ''}`}>
             {isSaving ? 'Saving...' : 'Saved'}
           </span>
+          <button 
+            className={`history-btn ${isHistoryOpen ? 'active' : ''}`}
+            onClick={() => setIsHistoryOpen(true)}
+            title="Version History"
+          >
+            <Clock size={18} />
+          </button>
           <div className="view-toggle">
             <button 
               className={viewMode === 'edit' ? 'active' : ''} 
@@ -101,6 +118,13 @@ export default function EditorPane({ note, onSave, isSaving }) {
         )}
       </div>
 
+      <HistorySidebar 
+        noteId={note.id} 
+        isOpen={isHistoryOpen} 
+        onClose={() => setIsHistoryOpen(false)}
+        onRestore={handleRestore}
+      />
+
       <style jsx>{`
         .no-note-selected {
           flex: 1;
@@ -112,11 +136,11 @@ export default function EditorPane({ note, onSave, isSaving }) {
           gap: 1rem;
         }
         .editor-header {
-          height: var(--header-height);
-          padding: 0 1.5rem;
+          min-height: calc(var(--header-height) + 40px);
+          padding: 1rem 1.5rem;
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
           border-bottom: 1px solid var(--border-color);
           background: var(--bg-color);
         }
@@ -127,12 +151,22 @@ export default function EditorPane({ note, onSave, isSaving }) {
           font-weight: 700;
           color: var(--text-color);
           outline: none;
-          flex: 1;
+          width: 100%;
         }
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 15px;
+          margin-top: 5px;
+        }
+        .history-btn {
+          background: transparent;
+          color: #94a3b8;
+          padding: 8px;
+        }
+        .history-btn:hover, .history-btn.active {
+          color: var(--accent-color);
+          background: var(--sidebar-bg);
         }
         .save-indicator {
           font-size: 0.8rem;

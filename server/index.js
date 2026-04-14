@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const noteRoutes = require('./routes/notes');
+const tagRoutes = require('./routes/tags');
+const versionRoutes = require('./routes/versions');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +16,8 @@ app.use(express.json());
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api/versions', versionRoutes);
 
 // Serve Static Files in Production
 const clientDistPath = path.join(__dirname, '../client/dist');

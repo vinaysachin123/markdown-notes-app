@@ -37,12 +37,21 @@ router.post('/', authenticateToken, (req, res) => {
 // Update a note
 router.put('/:id', authenticateToken, (req, res) => {
   const { title, content } = req.body;
-  const sql = 'UPDATE notes SET title = ?, content = ?, last_modified = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?';
   
-  db.run(sql, [title, content, req.params.id, req.user.id], function(err) {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (this.changes === 0) return res.status(404).json({ error: 'Note not found or unauthorized' });
-    res.json({ message: 'Note updated' });
+  // 1. Create a version snapshot of the CURRENT content before updating
+  const getOldContentSql = 'SELECT content FROM notes WHERE id = ? AND user_id = ?';
+  db.get(getOldContentSql, [req.params.id, req.user.id], (err, row) => {
+    if (row && row.content !== content) {
+      db.run('INSERT INTO note_versions (note_id, content) VALUES (?, ?)', [req.params.id, row.content]);
+    }
+
+    // 2. Update the note
+    const sql = 'UPDATE notes SET title = ?, content = ?, last_modified = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?';
+    db.run(sql, [title, content, req.params.id, req.user.id], function(err) {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      if (this.changes === 0) return res.status(404).json({ error: 'Note not found or unauthorized' });
+      res.json({ message: 'Note updated' });
+    });
   });
 });
 
