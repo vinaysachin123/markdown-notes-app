@@ -26,8 +26,8 @@ app.use('/api/versions', versionRoutes);
 const clientDistPath = path.join(__dirname, '../client/dist');
 app.use(express.static(clientDistPath));
 
-// Catch-all route for React SPA
-app.get('(.*)', (req, res) => {
+// Catch-all route for React SPA (Robust Middleware)
+app.use((req, res) => {
   res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
