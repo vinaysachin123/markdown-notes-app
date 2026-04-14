@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { RotateCcw, x, Clock, X } from 'lucide-react';
+import { RotateCcw, Clock, X } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 

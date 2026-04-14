@@ -6,7 +6,7 @@ import EditorPane from './components/EditorPane';
 import Auth from './components/Auth';
 import useDebounce from './hooks/useDebounce';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = 'https://markdown-notes-app-nnh0.onrender.com/api';
 
 function App() {
   const { token, loading } = useAuth();
